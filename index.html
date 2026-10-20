@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aarav – AI Voice Sales Bot</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#fff; --ink:#15181f; --muted:#667085; --line:#e4e7ec;
+  --accent:#0b6e5c; --accent-ink:#fff; --danger:#c42b1c;
+  --s-converted:#0b7a4b; --s-interested:#1d6fd1; --s-follow:#b7791f; --s-no:#9b2c2c; --s-demo:#6b46c1; --s-none:#667085;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1216;--card:#171b21;--ink:#eef1f5;--muted:#98a2b3;--line:#2a313b;--accent:#35c3a4;--accent-ink:#04201a;--danger:#ff6b5c;
+  --s-converted:#4ad595;--s-interested:#6aa8ff;--s-follow:#f0b44c;--s-no:#ff8585;--s-demo:#b79cff;--s-none:#98a2b3}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:18px max(16px,env(safe-area-inset-left));display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;max-width:1100px;margin:0 auto}
+header h1{margin:0;font-size:20px}
+header span{color:var(--muted)}
+main{max-width:1100px;margin:0 auto;padding:0 16px 40px;display:grid;grid-template-columns:320px 1fr;gap:16px}
+@media(max-width:820px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label{font-size:13px;color:var(--muted)}
+select,input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+button{font:inherit;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn-start{background:var(--accent);color:var(--accent-ink);flex:1}
+.btn-end{background:var(--danger);color:#fff;flex:1}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.timer{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;margin:6px 0}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 11px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill[data-s=live] .dot{background:var(--accent);animation:pulse 1.2s infinite}
+.pill[data-s=busy] .dot{background:var(--s-follow)}
+@keyframes pulse{50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.pill .dot{animation:none!important}}
+.consent{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted);margin:12px 0}
+.consent input{margin-top:3px}
+.stack{display:flex;flex-direction:column;gap:12px}
+#chat{height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
+.msg{max-width:82%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg small{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.msg.bot{background:var(--bg);border:1px solid var(--line);align-self:flex-start}
+.msg.user{background:var(--accent);color:var(--accent-ink);align-self:flex-end}
+.msg.user small{color:inherit;opacity:.75}
+.msg.interim{opacity:.6;font-style:italic}
+.empty{color:var(--muted);text-align:center;margin:auto}
+.typed{display:flex;gap:8px;margin-top:10px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid currentColor}
+.st-Converted{color:var(--s-converted)}.st-Interested{color:var(--s-interested)}.st-Follow-up{color:var(--s-follow)}
+.st-Not{color:var(--s-no)}.st-Demo{color:var(--s-demo)}.st-No{color:var(--s-none)}
+ul{margin:4px 0 10px;padding-left:20px}
+.k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:10px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+details{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--card)}
+summary{cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;list-style:none}
+summary::-webkit-details-marker{display:none}
+.tr{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;background:var(--bg)}
+audio{width:100%;margin:6px 0}
+.note{font-size:12px;color:var(--muted)}
+.banner{background:#fff4e5;color:#7a4a00;border:1px solid #f3c98b;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Aarav, AI Voice Sales Bot</h1>
+  <span>Live voice demo selling FlowDesk, a WhatsApp CRM</span>
+</header>
+
+<main>
+  <section class="card stack" aria-label="Call controls">
+    <div>
+      <h2>Call</h2>
+      <div class="pill" id="statusPill" data-s="idle"><span class="dot"></span><span id="statusText">Ready</span></div>
+      <div class="timer" id="timer" aria-live="off">00:00</div>
+    </div>
+    <div>
+      <label for="lang">Language</label>
+      <select id="lang">
+        <option value="en-IN">English</option>
+        <option value="hi-IN">Hindi (हिन्दी)</option>
+        <option value="te-IN">Telugu (తెలుగు)</option>
+      </select>
+    </div>
+    <label class="consent"><input type="checkbox" id="consent">
+      <span>I agree this call will be recorded and stored in this browser for playback and review.</span></label>
+    <div class="row">
+      <button class="btn-start" id="startBtn" disabled>Start Call</button>
+      <button class="btn-end" id="endBtn" disabled>End Call</button>
+    </div>
+    <p class="note" id="supportNote"></p>
+    <p class="note">Tip: use headphones so the bot's voice is not picked up by the microphone.</p>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Live conversation</h2>
+      <div id="chat" role="log" aria-live="polite"><p class="empty">Press Start Call. The bot speaks first, then listens.</p></div>
+      <form class="typed" id="typedForm">
+        <input type="text" id="typedInput" placeholder="Or type your reply during the call" autocomplete="off" disabled>
+        <button class="btn-ghost" id="typedBtn" disabled>Send</button>
+      </form>
+    </div>
+
+    <div class="card" id="resultCard" hidden>
+      <h2>Call result</h2>
+      <div id="resultBody"></div>
+    </div>
+
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" id="tabHist">Call history</button>
+      </div>
+      <div id="history"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const STATUS_CLASS = (s) => "st-" + s.split(/[ -]/)[0];
+
+  let active = false, lang = "en-IN", startTs = 0, timerInt = null;
+  let apiMsgs = [], shown = [], recog = null, cancelListen = null, typedResolve = null;
+  let stream = null, recorder = null, chunks = [], recMime = "";
+  let interimEl = null, token = 0;
+
+  // ---------- UI helpers ----------
+  function setStatus(text, kind) {
+    $("#statusText").textContent = text;
+    $("#statusPill").dataset.s = kind || "idle";
+  }
+  const fmt = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  function addMsg(who, text) {
+    const chat = $("#chat");
+    const empty = chat.querySelector(".empty"); if (empty) empty.remove();
+    clearInterim();
+    const d = document.createElement("div");
+    d.className = "msg " + who;
+    const sm = document.createElement("small");
+    sm.textContent = who === "bot" ? "Aarav (AI)" : "You";
+    const p = document.createElement("span"); p.textContent = text;
+    d.append(sm, p); chat.append(d); chat.scrollTop = chat.scrollHeight;
+    shown.push({ who, text });
+  }
+  function showInterim(text) {
+    const chat = $("#chat");
+    if (!interimEl) {
+      interimEl = document.createElement("div"); interimEl.className = "msg user interim";
+      chat.append(interimEl);
+    }
+    interimEl.textContent = text; chat.scrollTop = chat.scrollHeight;
+  }
+  function clearInterim() { if (interimEl) { interimEl.remove(); interimEl = null; } }
+
+  if (!SR) {
+    $("#supportNote").textContent = "Speech recognition is not available in this browser. Open in Chrome or Edge on desktop or Android. You can still type your replies.";
+  } else {
+    $("#supportNote").textContent = "Works best in Chrome or Edge. Allow the microphone when asked.";
+  }
+  $("#consent").addEventListener("change", (e) => { $("#startBtn").disabled = !e.target.checked || active; });
+
+  // ---------- Speech out ----------
+  function pickVoice() {
+    const vs = speechSynthesis.getVoices();
+    return vs.find((v) => v.lang.replace("_", "-") === lang) || vs.find((v) => v.lang.toLowerCase().startsWith(lang.slice(0, 2))) || null;
+  }
+  function speak(text) {
+    return new Promise((res) => {
+      if (!("speechSynthesis" in window)) return res();
+      speechSynthesis.cancel();
+      const parts = (text.match(/[^.!?।]+[.!?।]*/g) || [text]).map((s) => s.trim()).filter(Boolean);
+      const v = pickVoice(); let i = 0;
+      const next = () => {
+        if (!active || i >= parts.length) return res();
+        const u = new SpeechSynthesisUtterance(parts[i++]);
+        u.lang = lang; if (v) u.voice = v;
+        u.onend = next; u.onerror = next;
+        speechSynthesis.speak(u);
+      };
+      next();
+    });
+  }
+
+  // ---------- Speech in ----------
+  function listen() {
+    return new Promise((resolve) => {
+      let done = false, finalText = "", to = null;
+      const finish = (v) => {
+        if (done) return; done = true; clearTimeout(to);
+        typedResolve = null; cancelListen = null;
+        try { recog && recog.abort(); } catch {}
+        recog = null; clearInterim(); resolve(v);
+      };
+      cancelListen = () => finish(null);
+      typedResolve = (t) => finish(t);
+      if (!SR) return;
+      recog = new SR(); recog.lang = lang; recog.interimResults = true; recog.continuous = false;
+      recog.onresult = (e) => {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) finalText += r[0].transcript + " "; else interim += r[0].transcript;
+        }
+        showInterim((finalText + interim).trim());
+      };
+      recog.onend = () => finish(finalText.trim() || null);
+      recog.onerror = () => {};
+      to = setTimeout(() => finish(finalText.trim() || null), 15000);
+      try { recog.start(); } catch {}
+    });
+  }
+
+  // ---------- Brain ----------
+  async function api(body) {
+    const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "Server error " + r.status);
+    return j;
+  }
+  async function botTurn() {
+    setStatus("Thinking…", "busy");
+    const out = await api({ mode: "chat", lang, messages: apiMsgs });
+    return out;
+  }
+
+  // ---------- Recording ----------
+  async function startRecording() {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+    recMime = types.find((t) => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+    recorder = new MediaRecorder(stream, recMime ? { mimeType: recMime } : undefined);
+    chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    recorder.start(1000);
+  }
+  function stopRecording() {
+    return new Promise((res) => {
+      const finish = () => {
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+        stream = null;
+        res(chunks.length ? new Blob(chunks, { type: recMime || "audio/webm" }) : null);
+      };
+      if (!recorder || recorder.state === "inactive") return finish();
+      recorder.onstop = finish; recorder.stop();
+    });
+  }
+
+  // ---------- Call flow ----------
+  async function startCall() {
+    if (active) return;
+    lang = $("#lang").value;
+    try { await startRecording(); }
+    catch { setStatus("Microphone blocked", "idle"); alert("Please allow microphone access to start the call."); return; }
+    active = true; const my = ++token;
+    apiMsgs = [{ role: "user", text: "(The call has just connected. Greet the customer.)" }];
+    shown = []; $("#chat").innerHTML = ""; $("#resultCard").hidden = true;
+    startTs = Date.now(); $("#timer").textContent = "00:00";
+    timerInt = setInterval(() => { $("#timer").textContent = fmt(Math.round((Date.now() - startTs) / 1000)); }, 500);
+    $("#startBtn").disabled = true; $("#endBtn").disabled = false; $("#lang").disabled = true; $("#consent").disabled = true;
+    $("#typedInput").disabled = false; $("#typedBtn").disabled = false;
+    setStatus("Connecting…", "busy");
+    try {
+      let silent = 0, first = true;
+      while (active && my === token) {
+        if (first) {
+          const out = await botTurn(); if (!active || my !== token) return;
+          await say(out.reply); first = false; if (out.end_call) break; continue;
+        }
+        setStatus("Listening…", "live");
+        const heard = await listen();
+        if (!active || my !== token) return;
+        if (!heard) {
+          silent++;
+          if (silent >= 2) { await say(NUDGE_BYE[lang] || NUDGE_BYE["en-IN"]); break; }
+          await say(NUDGE[lang] || NUDGE["en-IN"]); continue;
+        }
+        silent = 0; addMsg("user", heard); apiMsgs.push({ role: "user", text: heard });
+        const out = await botTurn(); if (!active || my !== token) return;
+        await say(out.reply); if (out.end_call) break;
+      }
+      if (active && my === token) endCall();
+    } catch (e) {
+      if (active) { addMsg("bot", "Sorry, something went wrong: " + e.message); endCall(); }
+    }
+  }
+  async function say(text) {
+    addMsg("bot", text); apiMsgs.push({ role: "bot", text });
+    setStatus("Bot speaking…", "live");
+    await speak(text);
+  }
+  const NUDGE = { "en-IN": "Hello, are you still there?", "hi-IN": "हैलो, क्या आप मुझे सुन पा रहे हैं?", "te-IN": "హలో, మీరు వినిపిస్తున్నారా?" };
+  const NUDGE_BYE = { "en-IN": "I can't hear you, so I'll let you go. Thank you, goodbye!", "hi-IN": "मुझे आपकी आवाज़ नहीं आ रही, मैं बाद में कॉल करूँगा। धन्यवाद, नमस्ते!", "te-IN": "మీ గొంతు వినిపించడం లేదు, తర్వాత కాల్ చేస్తాను. ధన్యవాదాలు, నమస్కారం!" };
+
+  async function endCall() {
+    if (!active) return;
+    active = false; token++;
+    cancelListen && cancelListen(); speechSynthesis.cancel(); clearInterval(timerInt);
+    const duration = Math.round((Date.now() - startTs) / 1000);
+    $("#endBtn").disabled = true; $("#typedInput").disabled = true; $("#typedBtn").disabled = true;
+    setStatus("Saving recording…", "busy");
+    const audio = await stopRecording();
+    setStatus("Writing summary…", "busy");
+    const transcript = shown.map((m) => (m.who === "bot" ? "Aarav" : "Customer") + ": " + m.text).join("\n");
+    const userTurns = shown.filter((m) => m.who === "user").length;
+    let res;
+    if (!userTurns) {
+      res = { summary: "The customer did not respond during the call.", requirements: [], objections: [], next_steps: ["Retry the call at a different time."], status: "No Response" };
+    } else {
+      try { res = await api({ mode: "summary", transcript }); }
+      catch { res = { summary: "Summary could not be generated.", requirements: [], objections: [], next_steps: [], status: "Follow-up Required" }; }
+    }
+    const ok = ["Converted", "Interested", "Follow-up Required", "Not Interested", "Demo Requested", "No Response"];
+    if (!ok.includes(res.status)) res.status = "Follow-up Required";
+    const rec = {
+      id: Date.now(), startedAt: Date.now() - duration * 1000, duration, lang, transcript,
+      summary: res.summary || "", requirements: res.requirements || [], objections: res.objections || [],
+      next_steps: res.next_steps || [], status: res.status, audio, mime: recMime || "audio/webm",
+    };
+    try { await dbPut(rec); } catch {}
+    showResult(rec); await renderHistory();
+    setStatus("Call ended", "idle");
+    $("#startBtn").disabled = !$("#consent").checked; $("#lang").disabled = false; $("#consent").disabled = false;
+  }
+
+  $("#startBtn").addEventListener("click", startCall);
+  $("#endBtn").addEventListener("click", endCall);
+  $("#typedForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("#typedInput").value.trim(); if (!v || !typedResolve) return;
+    $("#typedInput").value = ""; typedResolve(v);
+  });
+
+  // ---------- Result + history rendering ----------
+  function listBlock(title, arr) {
+    const f = document.createDocumentFragment();
+    const k = document.createElement("div"); k.className = "k"; k.textContent = title; f.append(k);
+    const ul = document.createElement("ul");
+    (arr.length ? arr : ["None noted"]).forEach((t) => { const li = document.createElement("li"); li.textContent = t; ul.append(li); });
+    f.append(ul); return f;
+  }
+  function recordView(rec, withAudio) {
+    const w = document.createElement("div");
+    const b = document.createElement("span"); b.className = "badge " + STATUS_CLASS(rec.status); b.textContent = rec.status;
+    w.append(b);
+    const k = document.createElement("div"); k.className = "k"; k.textContent = "Summary"; w.append(k);
+    const p = document.createElement("p"); p.style.margin = "4px 0 6px"; p.textContent = rec.summary; w.append(p);
+    w.append(listBlock("Customer requirements", rec.requirements), listBlock("Objections", rec.objections), listBlock("Next steps", rec.next_steps));
+    if (withAudio) {
+      const k2 = document.createElement("div"); k2.className = "k"; k2.textContent = "Recording"; w.append(k2);
+      if (rec.audio) {
+        const a = document.createElement("audio"); a.controls = true; a.src = URL.createObjectURL(rec.audio); w.append(a);
+        const n = document.createElement("div"); n.className = "note"; n.textContent = "Recording captures the customer's microphone. The bot's voice is in the transcript."; w.append(n);
+      } else { const n = document.createElement("div"); n.className = "note"; n.textContent = "No audio was captured."; w.append(n); }
+    }
+    const k3 = document.createElement("div"); k3.className = "k"; k3.textContent = "Transcript"; w.append(k3);
+    const tr = document.createElement("div"); tr.className = "tr"; tr.style.whiteSpace = "pre-wrap"; tr.textContent = rec.transcript || "(empty)"; w.append(tr);
+    return w;
+  }
+  function showResult(rec) {
+    const body = $("#resultBody"); body.innerHTML = ""; body.append(recordView(rec, true));
+    const meta = document.createElement("p"); meta.className = "note"; meta.textContent = "Duration " + fmt(rec.duration); body.prepend(meta);
+    $("#resultCard").hidden = false;
+  }
+  async function renderHistory() {
+    const box = $("#history"); box.innerHTML = "";
+    let list = []; try { list = await dbAll(); } catch {}
+    if (!list.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "No calls yet. Finished calls appear here."; box.append(p); return; }
+    list.sort((a, b) => b.id - a.id).forEach((rec) => {
+      const d = document.createElement("details");
+      const s = document.createElement("summary");
+      const b = document.createElement("span"); b.className = "badge " + STATUS_CLASS(rec.status); b.textContent = rec.status;
+      const t = document.createElement("span"); t.textContent = new Date(rec.startedAt).toLocaleString();
+      const du = document.createElement("span"); du.className = "note"; du.textContent = fmt(rec.duration);
+      s.append(b, t, du); d.append(s);
+      d.addEventListener("toggle", () => { if (d.open && d.children.length === 1) { d.append(recordView(rec, true)); const del = document.createElement("button"); del.className = "btn-ghost"; del.textContent = "Delete call"; del.style.marginTop = "10px"; del.onclick = async () => { await dbDel(rec.id); renderHistory(); }; d.append(del); } });
+      box.append(d);
+    });
+  }
+
+  // ---------- IndexedDB ----------
+  let dbp;
+  function db() {
+    return dbp || (dbp = new Promise((res, rej) => {
+      const r = indexedDB.open("voice-sales-bot", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("calls", { keyPath: "id" });
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }));
+  }
+  const tx = async (mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction("calls", mode); const rq = fn(t.objectStore("calls")); t.oncomplete = () => res(rq && rq.result); t.onerror = () => rej(t.error); }); };
+  const dbPut = (rec) => tx("readwrite", (s) => s.put(rec));
+  const dbAll = () => tx("readonly", (s) => s.getAll());
+  const dbDel = (id) => tx("readwrite", (s) => s.delete(id));
+
+  if ("speechSynthesis" in window) speechSynthesis.getVoices();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
